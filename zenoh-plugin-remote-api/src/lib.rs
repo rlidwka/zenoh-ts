@@ -540,7 +540,11 @@ async fn run_websocket_server(
                 None => Box::new(tcp_stream),
             };
 
-            let ws_stream = match tokio_tungstenite::accept_async(streamable).await {
+            use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
+            let ws_stream = match tokio_tungstenite::accept_hdr_async(streamable, |_request: &Request, mut response: Response| {
+                response.headers_mut().insert("Access-Control-Allow-Origin", "*".parse().unwrap());
+                Ok(response)
+            }).await {
                 Ok(ws_stream) => ws_stream,
                 Err(e) => {
                     tracing::error!("Error during the websocket handshake occurred: {}", e);
